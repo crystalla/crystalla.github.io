@@ -5,7 +5,8 @@
      margin-top: 100px;  background-color: rgb(183, 200, 233);
 
  }
- body{
+ body {
+     height: 100%;
      background-image: url("koln.jpg");
  }
 
@@ -71,4 +72,11 @@ border-radius: 8px !important;
     font-weight: 300;
     content: "/";
     margin-right: 3px;
+}
+
+/*--------------------------------------------------
+    [Contact]
+----------------------------------------------------*/
+#map {
+    height: 500px;
 }
