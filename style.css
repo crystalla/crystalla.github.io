@@ -15,13 +15,22 @@
     padding-bottom: 80px;
   }
 
-.md-margin-b-30 {
+.margin-b-30 {
     margin-bottom: 30px;
+}
+.margin-t-30 {
+    margin-top :30px;
 }
 
 .radius-8 {
 border-radius: 8px !important;
 }
+
+.contacts {
+    background-color: rgb(183, 200, 233); 
+    padding: 10px 20px;
+}
+
 
 /*--------------------------------------------------
     [Price]
@@ -74,9 +83,15 @@ border-radius: 8px !important;
     margin-right: 3px;
 }
 
+.discount
+{
+    color: rgb(0, 0, 0);
+    text-align: center;
+}
+
 /*--------------------------------------------------
     [Contact]
 ----------------------------------------------------*/
 #map {
-    height: 500px;
+    height: 510px;
 }
