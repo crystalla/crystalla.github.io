@@ -23,7 +23,7 @@
 }
 
 .radius-8 {
-border-radius: 8px !important;
+border-radius: 8px;
 }
 
 .contacts {
@@ -94,4 +94,9 @@ border-radius: 8px !important;
 ----------------------------------------------------*/
 #map {
     height: 510px;
+}
+
+.about {
+    background-color: rgba(127, 189, 214, 0.712);
+    border-radius: 8px;
 }
