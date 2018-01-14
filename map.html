@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Odhad Street View</title>
+    <style>
+
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #pano {
+        width: 100%;
+        height: 100%;
+        float: left;
+        position: absolute;
+        /*z-index:1000;*/
+        /*display: none;*/
+      }
+      #map {
+        z-index: 10;
+        height: 20%;
+        width: 30%;
+        position: absolute;
+        bottom: 8%;
+        right: 2%;
+      }
+      #button {
+        z-index: 10;
+        height: 5%;
+        width: 20%;
+        position: absolute;
+        bottom: 2%;
+        right: 2%;
+      }
+      #evaluation {
+        z-index: 20;
+        height: 30%;
+        width: 100%;
+        bottom: 0%;
+        text-align: center;
+        position: absolute;
+        display: none;
+        padding-top: 20px;
+        background-color: aquamarine;
+      }
+
+      #text {
+        font-size: 20px;
+      }
+
+      span.glyphicon {
+        font-size: 5em;
+      }
+    </style>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <link rel="shortcut icon" href="faviconearth.png" type="image/png">
+  </head>
+  <body>
+    <div id="evaluation">
+      <div id="retry" style="width: 50%; margin: 0 auto;">
+          <button class="btn btn-primary btn-lg" type="button">Zkusit znovu</button>
+          <div id="rating"></div>
+          <p id="text">Odhadnutá poloha je vzdálena od správné na <strong id="distance"></strong>km. </p>
+      </div>
+    </div>
+    <div id="map"></div>
+    <div id="game">
+      <div id="pano"></div>
+      <div id="button">
+          <input id="make_guess" type="button" style="width:60%" value="Odhadnout"></input>
+      </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+
+    <script>
+      function initPano() {
+        panorama = new google.maps.StreetViewPanorama(
+            document.getElementById('pano'), {
+              pov: {
+                heading: 0,
+                pitch: 0
+              },
+              zoomControl: false,
+              addressControl: false,
+              panControl: false,
+              enableCloseButton: false,
+              showRoadLabels: false,
+              visible: true
+        });
+
+
+        sv = new google.maps.StreetViewService();
+        radius = 1000;
+        getStreetViewLocation(getRandomLocation);
+
+      }
+
+       function getStreetViewLocation(callback) {
+            radius = radius*2;
+            sv.getPanorama({
+              location: validLatLng,
+              radius: radius,
+              preference: google.maps.StreetViewPreference.BEST,
+              source: google.maps.StreetViewSource.OUTDOOR
+            }, callback);
+        }
+
+        function getRandomLocation(data, status) {
+            if (status === 'OK') {
+                if (data && !data.links.length) {
+                    var lat = (Math.random() * 130) - 55, // -55 to 75
+                        lng = (Math.random() * 360) - 180;
+
+                    validLatLng = new google.maps.LatLng(lat, lng)
+                    getStreetViewLocation(getRandomLocation)
+                    return;
+                }
+                validLatLng = data.location.latLng;
+                panorama.setPano(data.location.pano);
+
+            } else {
+                // opakovat dokud nenajde panoramu
+                getStreetViewLocation(getRandomLocation)
+            }
+
+        }
+
+      function initMap() {
+        markerGuessed = new google.maps.Marker();
+        map.addListener('click', function(e) {
+            guessedLatLng = e.latLng;
+            markerGuessed.setMap(map);
+            markerGuessed.setPosition(guessedLatLng);
+            markerGuessed.setTitle("Odhadnutá lokace")
+        });
+
+      }
+
+      function init() {
+          map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 1,
+            center: {lat: 0, lng: 0}
+          });
+
+          var lat = (Math.random() * 130) - 55,
+              lng = (Math.random() * 360) - 180;
+          validLatLng = new google.maps.LatLng(lat, lng);
+          initPano();
+          initMap();
+      }
+
+      $("#make_guess").click(function() {
+        // kontrola jestli marker je nastaven
+        if (typeof guessedLatLng == 'undefined') {
+          alert("Musíte nejdřív odhadnout polohu.")
+          return;
+        }
+
+        // nastaveni velikosti mapy
+        $("#map").css("height", "70%")
+            .css("width", "100%")
+            .css("right", "0%")
+            .css("bottom", "30%")
+        // ukryvani game kontaineru
+        $("#game").css("display", "none");
+        // ukazani konraineru s vysledky odhadu
+        $("#evaluation").css("display", "inline")
+
+        google.maps.event.trigger(map, 'resize');
+        marker_valid = new google.maps.Marker({
+                    map: map,
+                    position: validLatLng,
+                    title: "Správná lokace"
+                });
+
+        // smazani starych hvezdicek
+        $("div#rating").empty();
+
+        // vypocitani distance
+        distance = google.maps.geometry.spherical.computeDistanceBetween(validLatLng, guessedLatLng);
+
+        $("strong#distance").html(Math.round(distance/10)/100);
+
+
+        if (distance < 500000) {
+          rating = 5;
+        } else if (distance < 1200000) {
+          rating = 4;
+        }  else if (distance < 2000000) {
+          rating = 3;
+        } else if (distance < 6000000) {
+          rating = 2;
+        } else {
+          rating = 1;
+        }
+
+        // pridani plnych hvezdicek
+        [...Array(rating)].forEach(function(i){
+          $("div#rating").append("<span class='glyphicon glyphicon-star'></span>")
+        });
+        // pridani prazdnych hvezdicek
+        [...Array(5-rating)].forEach(function(i){
+          $("div#rating").append("<span class='glyphicon glyphicon-star-empty'></span>")
+        });
+
+        line = new google.maps.Polyline({
+          path: [
+                  validLatLng,
+                  guessedLatLng
+                ],
+          geodesic: true,
+          strokeColor: '#FF0000',
+          strokeOpacity: 1.0,
+          strokeWeight: 2
+        });
+        // nastaveni velikosti mapy podle polohy zvolene a spravne lokaci
+        bounds = new google.maps.LatLngBounds();
+        bounds.extend(validLatLng);
+        bounds.extend(guessedLatLng);
+
+        line.setMap(map);
+        map.fitBounds(bounds);
+        // map.setZoom(2);
+      });
+
+      $("#retry button").click(function() {
+        // adjust map size
+        $("#map").css("height", "20%")
+            .css("width", "30%")
+            .css("right", "2%")
+            .css("bottom", "8%")
+        // show game container
+        $("#game").css("display", "inline");
+        // hide container with results
+        $("#evaluation").css("display", "none");
+
+
+        var lat = (Math.random() * 130) - 55;
+        var lng = (Math.random() * 360) - 180;
+
+        guessedLatLng = undefined;
+        validLatLng = new google.maps.LatLng(lat, lng)
+        radius = 1000;
+        getStreetViewLocation(getRandomLocation);
+
+        line.setMap(null);
+        marker_valid.setMap(null);
+        markerGuessed.setMap(null);
+
+
+        map.setCenter({lat: -80, lng: 90})
+        map.setZoom(1);
+      });
+
+    </script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAnSHnbZ1YDZepWd3OSQtur8INBLm5GSq8&callback=init"
+        async defer>
+    </script>
+  </body>
+</html>
